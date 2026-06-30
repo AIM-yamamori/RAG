@@ -11,10 +11,14 @@ LLM (Large Language Model)
 ## 例
 
 質問:
-    日本の首都は？
+
+日本の首都は？
+
 
 LLM:
-    東京です。
+
+東京です。
+
 
 
 ## LLMができること
@@ -26,35 +30,37 @@ LLM:
 - コード生成
 
 
+
 ## LLMの弱点
 
 LLMは学習していない情報や、
-社内限定の情報を知らない。
+自分専用の情報を知らない。
 
 
 例:
 
 質問:
 
-2026年の自社ルールを教えて
+株式会社フィクトワークスの有給ルールを教えて
 
 
 LLM:
 
-一般的な知識なら回答できるが、
-自社独自のルールは知らない
+一般的な労務知識は回答できるが、
+会社独自の規則は知らない。
+
 
 
 LLMが知らない情報:
 
 - 社内資料
-- 自社PDF
+- 自社マニュアル
 - 過去資料
-- マニュアル
 - 非公開データ
 
 
-この問題を解決する方法がRAG。
+この問題を解決する仕組みがRAG。
+
 
 
 
@@ -67,10 +73,12 @@ Retrieval Augmented Generation
 検索拡張生成
 
 
+
 ## 目的
 
 LLMに外部資料を検索させ、
 必要な情報を渡して回答させる仕組み。
+
 
 
 ## 通常のLLM
@@ -84,6 +92,7 @@ LLM
 ↓
 
 回答
+
 
 
 ## RAG
@@ -108,45 +117,61 @@ LLM
 
 
 
-# RAGの処理
 
 
-## 1. 文書を準備
+# RAGの基本処理
+
+RAGには大きく2つの処理がある。
+
+
+1. データ登録時
+
+2. 質問時
+
+
+
+# 1. データ登録時の処理
+
+
+
+## 文書準備
+
 
 対象:
 
-- PDF
 - Markdown
+- PDF
 - TXT
 - Word
 
 
-例:
+今回:
 
 就業規則.md
 
-↓
-
-文章化
 
 ↓
 
-分割
+文章取得
 
 
 
-## 2. Chunk分割
+## Chunk分割
+
 
 文章を検索しやすいサイズに分割する。
 
 
+
 例:
+
 
 元:
 
 04_休暇制度.md
 
 5000文字
+
 
 
 ↓
@@ -156,30 +181,37 @@ chunk1
 年次有給休暇について...
 
 
+
 chunk2
 
 育児休業について...
 
 
+
 目的:
 
 - 検索精度向上
-- LLMへ渡す情報量を調整
+- 必要な部分だけ取得するため
 
 
 
-## 3. Embedding化
+## Embedding化
+
 
 文章を数字（ベクトル）へ変換する。
 
 
+
 例:
 
+
 有給休暇の取得方法
+
 
 ↓
 
 [0.234,0.556,0.921]
+
 
 
 この数字を使って、
@@ -190,12 +222,13 @@ chunk2
 
 
 
-## 4. Vector Databaseへ保存
+## Vector Databaseへ保存
 
 
 Vector Database:
 
-検索専用データベース
+検索用データベース
+
 
 
 例:
@@ -204,7 +237,9 @@ Vector Database:
 Vector DB
 
 
+
 [0.234,0.556]
+
 
 ↓
 
@@ -216,6 +251,7 @@ chunk1
 
 [0.812,0.332]
 
+
 ↓
 
 09_情報セキュリティ.md
@@ -225,10 +261,13 @@ chunk3
 
 
 
-# 質問時のRAG処理
+
+# 2. 質問時のRAG処理
+
 
 
 質問:
+
 
 テレワークのルールを教えて
 
@@ -238,6 +277,7 @@ chunk3
 
 
 テレワークのルール
+
 
 ↓
 
@@ -251,20 +291,25 @@ chunk3
 意味が近い文章を探す。
 
 
+
 結果:
+
 
 03_勤務時間・休憩・休日.md
 
+
 テレワーク制度について...
+
 
 
 
 ## ③ LLMへ渡す
 
 
-検索結果:
 
-参考資料:
+RAG:
+
+参考情報:
 
 03_勤務時間・休憩・休日.md
 
@@ -290,58 +335,69 @@ LLM
 # LM Studioとは
 
 
-- PC上でLLMを動かすための環境
-- ローカルLLM実行ツール
+- PC上でLLMを動かすツール
+- ローカルLLM実行環境
 
 
-通常:
+
+## LM Studioの位置づけ
+
+
+LM Studioは主に、
+
+- 開発確認
+- RAG動作確認
+- プロンプト調整
+
+で使用する。
+
+
+
+## LM Studio構成
+
 
 質問
 
-↓
-
-クラウドAI
-
-↓
-
-回答
-
-
-
-LM Studio:
-
-質問
 
 ↓
 
 自分のPC
 
+
+↓
+
+LM Studio
+
+
 ↓
 
 LLM
 
+
 ↓
 
 回答
+
+
 
 
 
 # LM Studioの役割
 
 
-RAGでは役割分担する。
-
 
 RAG:
 
-必要な情報を探す
+必要な情報を検索する
+
 
 
 ↓
 
 LM Studio:
 
-情報をもとに文章を作成する
+検索結果をもとに文章を作る
+
 
 
 
@@ -350,13 +406,19 @@ LM Studio:
 
 RAG:
 
+
 参考情報:
 
+
 輸入者:
+
 ABC Trading
 
+
 原産国:
+
 China
+
 
 
 
@@ -364,11 +426,14 @@ China
 
 LM Studio:
 
+
 回答:
+
 
 輸入者はABC Tradingです。
 
 原産国はChinaです。
+
 
 
 
@@ -382,6 +447,9 @@ LM Studio:
 
 × データ保存
 
+× RAG検索
+
+
 
 
 ## LM Studioがやること
@@ -394,11 +462,13 @@ LM Studio:
 
 
 
+
 # Google Cloudとは
 
 
 - クラウド上のコンピュータ環境
-- サーバやサービスを利用できる場所
+- サーバやAIサービスを利用する場所
+
 
 
 イメージ:
@@ -406,17 +476,19 @@ LM Studio:
 
 自分のPC:
 
-小さいコンピュータ
+開発環境
 
 
 Google Cloud:
 
-大きなコンピュータ環境を借りる
+本番サービスを動かす環境
+
 
 
 
 
 # Google Cloudの役割
+
 
 
 ## Cloud Storage
@@ -425,12 +497,15 @@ Google Cloud:
 ファイル保存場所
 
 
+
 例:
 
 
 bucket:
 
+
 documents/
+
 
 ├ 00_概要_目次.md
 
@@ -440,30 +515,10 @@ documents/
 
 
 
-
 役割:
 
-- データ保管
+- 就業規則ファイル保存
 
-
-
-## Document AI
-
-
-文書解析サービス
-
-
-例:
-
-PDF
-
-↓
-
-文字・表抽出
-
-↓
-
-データ化
 
 
 
@@ -471,7 +526,8 @@ PDF
 ## Vector Database
 
 
-RAG検索用DB
+RAG検索用データベース
+
 
 
 流れ:
@@ -494,22 +550,100 @@ Embedding
 
 
 
+
+## Vertex AI
+
+
+Google Cloud上のAIサービス
+
+
+役割:
+
+
+- LLM利用
+- 回答生成
+
+
+
+本番環境では、
+
+LM Studioの代わりに利用する。
+
+
+
+
 # RAG・LM Studio・Google Cloudの関係
 
 
-RAG:
 
-- 必要な情報を探す仕組み
+## 開発・確認環境
+
+Markdown
+
+↓
+
+RAG
+
+↓
+
+Vector DB
+
+↓
+
+LM Studio
+
+↓
+
+回答
 
 
-LM Studio:
-
-- AI回答を作るエンジン
 
 
-Google Cloud:
+目的:
 
-- データ保存やクラウド基盤
+- RAG動作確認
+- 開発
+
+
+
+---
+
+
+## 本番環境
+
+Markdown
+
+↓
+
+Cloud Storage
+
+↓
+
+Embedding
+
+↓
+
+Vector Database
+
+↓
+
+RAG
+
+↓
+
+Vertex AI
+
+↓
+
+回答
+
+
+
+
+目的:
+
+- Google Cloud上でサービス提供
+
 
 
 
@@ -517,7 +651,9 @@ Google Cloud:
 # 今回作成予定のシステム
 
 
+
 ## 目的
+
 
 就業規則Markdownを知識データとして、
 
@@ -530,7 +666,9 @@ Google Cloud:
 
 検索対象:
 
+
 架空会社の就業規則
+
 
 Markdown 11ファイル
 
@@ -561,14 +699,12 @@ Markdown 11ファイル
 
 
 
+
 # システム全体構成
 
 
+
 社員
-
-↓
-
-質問入力
 
 ↓
 
@@ -594,7 +730,7 @@ Vector検索
 
 ↓
 
-LM Studio
+LLM
 
 ↓
 
@@ -607,67 +743,66 @@ LM Studio
 
 
 
-# データ登録時の流れ
+
+# 開発から本番までの流れ
+
+
+
+## Step1 開発確認
+
+
+ローカル:
 
 
 Markdown
 
 ↓
 
-Google Cloud Storage保存
+RAG
 
 ↓
 
-読み込み
+Vector DB
 
 ↓
 
-Chunk分割
+LM Studio
 
 ↓
 
-Embedding
+回答
+
+
+
+
+## Step2 Google Cloud移行
+
+
+変更:
+
+
+LM Studio
 
 ↓
 
-Vector Database保存
+Vertex AI
 
 
 
+保存:
 
-# 質問時の流れ
 
-
-質問
-
-↓
-
-質問をEmbedding化
+ローカルファイル
 
 ↓
 
-Vector検索
-
-↓
-
-関連文章取得
-
-↓
-
-LM Studioへ渡す
-
-↓
-
-回答生成
-
-↓
-
-ユーザー表示
+Cloud Storage
 
 
 
 
 # 実装フォルダ構成イメージ
+
 
 
 rag-system/
@@ -704,7 +839,9 @@ Vector検索
 
 └ llm.py
 
-LM Studio接続
+LLM接続
+
+
 
 
 
@@ -715,29 +852,10 @@ data/
 
 
 
+
+
 frontend/
 
 
 └ app.py
 
-
-
-
-# 今後学ぶ順番
-
-
-1. Markdown読み込み
-
-2. Chunk分割
-
-3. Embedding
-
-4. Vector Database
-
-5. LM Studio API接続
-
-6. RAG処理実装
-
-7. FastAPI連携
-
-8. Google Cloud連携
