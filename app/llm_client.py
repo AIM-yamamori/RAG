@@ -10,8 +10,8 @@ def generate_answer(question: str, contexts: list[dict]) -> str:
     if not api_key:
         raise ValueError("環境変数 GEMINI_API_KEY が設定されていません")
     genai.configure(api_key=api_key)
-    model = genai.GenerativeModel("gemini-1.5-flash")
-
+    model = genai.GenerativeModel("gemini-2.5-flash-lite")
+    
     context_block = ""
     for c in contexts:
         context_block += (
