@@ -3,7 +3,7 @@
 ## venv仮想環境有効化
 - プロジェクトのルートで
 ```powershell
-.\venv\Scripts\activate
+.\venv\Scripts\activate.ps1
 ```
 
 ## venv仮想環境終了
