@@ -49,10 +49,10 @@ def answer_question(question: str) -> dict:
 
 
     # 長すぎる質問を防止
-    if len(question) > 500:
+    if len(question) > 200:
 
         raise ValueError(
-            "質問は500文字以内で入力してください。"
+            "質問は200文字以内で入力してください。"
         )
 
 

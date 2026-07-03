@@ -1,170 +1,78 @@
-# FastAPIでAPIを作成するための機能
-# HTTPExceptionはエラー返却に使用
-from fastapi import FastAPI, HTTPException
-
-# HTMLを返すために使用
-from fastapi.responses import HTMLResponse
-
-# JSONデータの型チェックに使用
-from pydantic import BaseModel, Field
-
-# ファイルパス操作に使用
+import streamlit as st
 import os
+import sys
 
+# 親ディレクトリをPythonの検索パスへ追加（既存の記述を移植）
+sys.path.append(
+    os.path.join(os.path.dirname(__file__), "..")
+)
 
-# RAG処理を呼び出す関数
-# 質問
-# ↓
-# ベクトル検索
-# ↓
-# Gemini回答生成
+# RAGのコアロジックをインポート
 from app.rag_service import answer_question
 
+# ページの設定
+st.set_page_config(
+    page_title="就業規則RAGチャットボット",
+    page_icon="💼",
+    layout="centered"
+)
 
+st.title("💼 就業規則チャットボット")
+st.caption("株式会社フィクトワークス | 就業規則について質問を入力してください")
 
-# FastAPIアプリ作成
-app = FastAPI(title="就業規則RAGチャットボット")
+# 会話履歴（セッション状態）の初期化
+if "messages" not in st.session_state:
+    st.session_state.messages = []
 
+# 画面リロード時に、過去の会話履歴を再描画
+for msg in st.session_state.messages:
+    with st.chat_message(msg["role"]):
+        st.write(msg["content"])
+        # アシスタントのメッセージで、かつ出典情報がある場合は st.expander で表示
+        if msg["role"] == "assistant" and msg.get("sources"):
+            with st.expander("📄 出典"):
+                for s in msg["sources"]:
+                    st.write(f"- {s['source_file']} {s['article_no']}({s['article_title']})")
 
+# ユーザーからの質問入力受付（Enterで送信）
+if question := st.chat_input("就業規則について質問してください..."):
+    
+    # 1. ユーザーの質問を画面に表示 & 履歴に追加
+    st.session_state.messages.append({"role": "user", "content": question})
+    with st.chat_message("user"):
+        st.write(question)
 
-# =========================
-# 受信データ形式
-# =========================
+    # 2. アシスタントの回答領域を作成
+    with st.chat_message("assistant"):
+        # 回答生成中のローディング表示（スピナー）
+        with st.spinner("回答を生成中..."):
+            try:
+                # 既存のRAGメイン処理をそのまま呼び出し
+                result = answer_question(question)
+                answer = result["answer"]
+                sources = result["sources"]
+                
+            except ValueError as e:
+                # 文字数オーバーなどのバリデーションエラー時の処理
+                answer = f"入力エラー: {str(e)}"
+                sources = []
+            except Exception as e:
+                # その他のシステムエラー時の処理
+                answer = "回答の生成中にエラーが発生しました。しばらくしてから再度お試しください。"
+                sources = []
 
-# ユーザーから送られる質問データ
-#
-# 例:
-# {
-#   "question": "有給休暇は何日ですか"
-# }
-class ChatRequest(BaseModel):
+        # 回答本文を表示
+        st.write(answer)
+        
+        # 出典情報（sources）がある場合は折りたたみ表示
+        if sources:
+            with st.expander("📄 出典"):
+                for s in sources:
+                    st.write(f"- {s['source_file']} {s['article_no']}({s['article_title']})")
 
-    # 質問文
-    # 必須、1〜500文字
-    question: str = Field(
-        ...,
-        min_length=1,
-        max_length=500
-    )
-
-
-
-# =========================
-# 返却データ形式
-# =========================
-
-
-# 検索元情報
-class SourceInfo(BaseModel):
-
-    # 参照したファイル名
-    source_file: str
-
-    # 条文番号
-    article_no: str | None = None
-
-    # 条文タイトル
-    article_title: str | None = None
-
-
-
-# APIレスポンス形式
-class ChatResponse(BaseModel):
-
-    # Geminiが生成した回答
-    answer: str
-
-    # 回答に使用した資料情報
-    sources: list[SourceInfo]
-
-
-
-# =========================
-# 動作確認用API
-# =========================
-
-@app.get("/api/health")
-def health():
-
-    # サーバー起動確認用
-    return {"status": "ok"}
-
-
-
-# =========================
-# チャットAPI
-# =========================
-
-@app.post("/api/chat", response_model=ChatResponse)
-def chat(request: ChatRequest):
-
-    try:
-
-        # 質問をRAG処理へ渡す
-        result = answer_question(
-            request.question
-        )
-
-
-        # 返却形式へ変換
-        return ChatResponse(
-
-            # 回答本文
-            answer=result["answer"],
-
-
-            # 検索結果をSourceInfo形式へ変換
-            sources=[
-                SourceInfo(**s)
-                for s in result["sources"]
-            ]
-        )
-
-
-    # 入力エラー
-    except ValueError as e:
-
-        raise HTTPException(
-            status_code=400,
-            detail=str(e)
-        )
-
-
-    # その他エラー
-    except Exception as e:
-
-        raise HTTPException(
-            status_code=500,
-            detail=str(e)
-        )
-
-
-
-# =========================
-# HTML表示
-# =========================
-
-@app.get("/", response_class=HTMLResponse)
-def index():
-
-
-    # index.htmlの場所を取得
-    #
-    # app/
-    #  └ static/
-    #       └ index.html
-    #
-    html_path = os.path.join(
-        os.path.dirname(__file__),
-        "static",
-        "index.html"
-    )
-
-
-    # HTMLを読み込んで返す
-    with open(
-        html_path,
-        encoding="utf-8"
-    ) as f:
-
-        return f.read()
+    # 3. アシスタントの回答と出典を履歴に追加
+    st.session_state.messages.append({
+        "role": "assistant",
+        "content": answer,
+        "sources": sources
+    })
