@@ -11,16 +11,17 @@ from ingest.embedder import get_embedding
 # GCS操作用
 from google.cloud import storage
 
+from dotenv import load_dotenv
+load_dotenv()
+
 # GCS保存先
-BUCKET_NAME = "fictworks-rule-data-501004"
+BUCKET_NAME = os.getenv("BUCKET_NAME")
 
 # Cloud SQL接続情報
-INSTANCE_CONNECTION_NAME = (
-    "my-project-rag-501004:asia-northeast1:rag-rules-db"
-)
-DB_USER = "rag_user"
-DB_PASS = "RagUserPass456!"
-DB_NAME = "rag_db"
+INSTANCE_CONNECTION_NAME = os.getenv("INSTANCE_CONNECTION_NAME")
+DB_USER = os.getenv("DB_USER")
+DB_PASS = os.getenv("DB_PASS")
+DB_NAME = os.getenv("DB_NAME")
 
 
 # =========================

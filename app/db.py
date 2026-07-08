@@ -6,16 +6,16 @@ import sqlalchemy
 # Cloud SQL接続用
 from google.cloud.sql.connector import Connector
 
+from dotenv import load_dotenv
+load_dotenv()
 
 
 # Cloud SQL接続情報
-INSTANCE_CONNECTION_NAME = (
-    "my-project-rag-501004:asia-northeast1:rag-rules-db"
-)
+INSTANCE_CONNECTION_NAME = os.getenv("INSTANCE_CONNECTION_NAME")
 
-DB_USER = "rag_user"
-DB_PASS = "RagUserPass456!"
-DB_NAME = "rag_db"
+DB_USER = os.getenv("DB_USER")
+DB_PASS = os.getenv("DB_PASS")
+DB_NAME = os.getenv("DB_NAME")
 
 
 
