@@ -1,16 +1,31 @@
-import streamlit as st
+import logging
 import os
 import sys
 
-# 親ディレクトリをPythonの検索パスへ追加（既存の記述を移植）
+import streamlit as st
+
+# 親ディレクトリをPython検索パスへ追加
 sys.path.append(
     os.path.join(os.path.dirname(__file__), "..")
 )
 
-# RAGのコアロジックをインポート
 from app.rag_service import answer_question
 
-# ページの設定
+# -----------------------------
+# ログ設定
+# -----------------------------
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+# 開発環境用フラグ
+DEBUG = os.getenv("DEBUG", "false").lower() == "true"
+
+# 最大入力文字数
+MAX_QUESTION_LENGTH = 200
+
+# -----------------------------
+# ページ設定
+# -----------------------------
 st.set_page_config(
     page_title="就業規則RAGチャットボット",
     page_icon="💼",
@@ -20,57 +35,147 @@ st.set_page_config(
 st.title("💼 就業規則チャットボット")
 st.caption("株式会社フィクトワークス | 就業規則について質問を入力してください")
 
-# 会話履歴（セッション状態）の初期化
+# -----------------------------
+# セッション初期化
+# -----------------------------
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# 画面リロード時に、過去の会話履歴を再描画
+# -----------------------------
+# 出典表示
+# -----------------------------
+def show_sources(sources):
+    """
+    出典一覧を表示する
+    """
+    if not sources:
+        return
+
+    with st.expander("📄 出典"):
+        for s in sources:
+            source_file = s.get("source_file", "不明")
+            article_no = s.get("article_no", "")
+            article_title = s.get("article_title", "")
+
+            st.write(
+                f"- {source_file} {article_no} ({article_title})"
+            )
+
+# -----------------------------
+# 会話履歴表示
+# -----------------------------
 for msg in st.session_state.messages:
     with st.chat_message(msg["role"]):
         st.write(msg["content"])
-        # アシスタントのメッセージで、かつ出典情報がある場合は st.expander で表示
-        if msg["role"] == "assistant" and msg.get("sources"):
-            with st.expander("📄 出典"):
-                for s in msg["sources"]:
-                    st.write(f"- {s['source_file']} {s['article_no']}({s['article_title']})")
 
-# ユーザーからの質問入力受付（Enterで送信）
+        if msg["role"] == "assistant":
+            show_sources(msg.get("sources", []))
+
+# -----------------------------
+# 入力受付
+# -----------------------------
 if question := st.chat_input("就業規則について質問してください..."):
-    
-    # 1. ユーザーの質問を画面に表示 & 履歴に追加
-    st.session_state.messages.append({"role": "user", "content": question})
+
+    # 前後の空白削除
+    question = question.strip()
+
+    # 空文字チェック
+    if not question:
+        st.warning("質問を入力してください。")
+        st.stop()
+
+    # 文字数チェック
+    if len(question) > MAX_QUESTION_LENGTH:
+        st.warning(
+            f"質問は{MAX_QUESTION_LENGTH}文字以内で入力してください。"
+        )
+        st.stop()
+
+    # ユーザー発言表示
+    st.session_state.messages.append({
+        "role": "user",
+        "content": question
+    })
+
     with st.chat_message("user"):
         st.write(question)
 
-    # 2. アシスタントの回答領域を作成
+    # 初期値
+    answer = ""
+    sources = []
+
+    # -----------------------------
+    # 回答生成
+    # -----------------------------
     with st.chat_message("assistant"):
-        # 回答生成中のローディング表示（スピナー）
+
         with st.spinner("回答を生成中..."):
+
             try:
-                # 既存のRAGメイン処理をそのまま呼び出し
+                logger.info("質問受付: %s", question)
+
                 result = answer_question(question)
-                answer = result["answer"]
-                sources = result["sources"]
-                
+
+                if result is None:
+                    raise RuntimeError(
+                        "answer_question() が None を返しました。"
+                    )
+
+                answer = result.get(
+                    "answer",
+                    "回答を取得できませんでした。"
+                )
+
+                sources = result.get(
+                    "sources",
+                    []
+                )
+
             except ValueError as e:
-                # 文字数オーバーなどのバリデーションエラー時の処理
-                answer = f"入力エラー: {str(e)}"
-                sources = []
+
+                logger.warning("入力エラー: %s", e)
+
+                answer = f"入力エラー: {e}"
+
+            except TimeoutError as e:
+
+                logger.exception("タイムアウト")
+
+                answer = (
+                    "処理がタイムアウトしました。"
+                    "時間をおいて再度お試しください。"
+                )
+
+            except ConnectionError as e:
+
+                logger.exception("接続エラー")
+
+                answer = (
+                    "サーバーへ接続できませんでした。"
+                    "しばらくしてから再度お試しください。"
+                )
+
             except Exception as e:
-                # その他のシステムエラー時の処理
-                answer = "回答の生成中にエラーが発生しました。しばらくしてから再度お試しください。"
-                sources = []
 
-        # 回答本文を表示
+                logger.exception("回答生成中に予期しないエラー")
+
+                if DEBUG:
+                    st.exception(e)
+
+                answer = (
+                    "回答の生成中にエラーが発生しました。"
+                    "しばらくしてから再度お試しください。"
+                )
+
+        # 回答表示
         st.write(answer)
-        
-        # 出典情報（sources）がある場合は折りたたみ表示
-        if sources:
-            with st.expander("📄 出典"):
-                for s in sources:
-                    st.write(f"- {s['source_file']} {s['article_no']}({s['article_title']})")
 
-    # 3. アシスタントの回答と出典を履歴に追加
+        # 出典表示
+        show_sources(sources)
+
+    # -----------------------------
+    # 会話履歴保存
+    # -----------------------------
     st.session_state.messages.append({
         "role": "assistant",
         "content": answer,
