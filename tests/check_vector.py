@@ -8,8 +8,8 @@ from app.db import get_engine
 import sqlalchemy
 
 print("=== ① ベクトル化テスト ===")
-v1 = get_embedding("試用期間は何ヶ月ですか？")
-v2 = get_embedding("有給休暇は何日もらえますか？")
+v1 = get_embedding("試用期間は何ヶ月ですか？", task_type="retrieval_query")
+v2 = get_embedding("有給休暇は何日もらえますか？", task_type="retrieval_query")
 
 print(f"質問1のベクトル(先頭5要素): {v1[:5]}")
 print(f"質問2のベクトル(先頭5要素): {v2[:5]}")

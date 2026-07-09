@@ -66,7 +66,8 @@ def answer_question(question: str) -> dict:
     # [0.12, -0.03, ...]
     #
     query_embedding = get_embedding(
-        question
+        question,
+        task_type="retrieval_query"
     )
 
 

@@ -135,7 +135,8 @@ def main():
             try:
                 # ❌ 【問題の箇所】本文をEmbedding化（ここでAPIを大量消費していた）
                 embedding = get_embedding(
-                    chunk["content"]
+                    chunk["content"],
+                    task_type="retrieval_document"
                 )
 
                 # DBへ登録

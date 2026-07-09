@@ -42,7 +42,7 @@ genai.configure(
 #
 # 数値の配列へ変換する
 #
-def get_embedding(text: str) -> list[float]:
+def get_embedding(text: str, task_type: str = "retrieval_document") -> list[float]:
 
 
 
@@ -63,7 +63,7 @@ def get_embedding(text: str) -> list[float]:
         # 文書保存 → retrieval_document
         # 質問検索 → retrieval_query
         #
-        task_type="retrieval_document",
+        task_type=task_type,
 
 
         # 出力するベクトルサイズ

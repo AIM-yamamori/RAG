@@ -14,7 +14,7 @@ def test_db_search(question: str):
     
     # 1. 質問文をベクトル化
     try:
-        query_embedding = get_embedding(question)
+        query_embedding = get_embedding(question, task_type="retrieval_query")
         print(f"-> ベクトル化成功 (次元数: {len(query_embedding)})")
     except Exception as e:
         print(f"-> ベクトル化失敗: {e}")
