@@ -100,7 +100,7 @@ streamlit run app\main.py
 docker run -p 8080:8080 -v "$env:APPDATA\gcloud:/root/.config/gcloud" -e GOOGLE_APPLICATION_CREDENTIALS=/root/.config/gcloud/application_default_credentials.json --env-file .env rag-rules-chatbot
 ```
 
-[http://localhost:8501にアクセス](http://localhost:8501)
+[http://localhost:8080にアクセス](http://localhost:8080)
 
 #### C. Cloud Runで実行
 
